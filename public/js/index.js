@@ -1,140 +1,144 @@
-const canvas = document.querySelector('canvas')
-const c = canvas.getContext('2d')
+const canvas = document.querySelector('canvas');
+const c = canvas.getContext('2d');
+let allUsers = {};
+let players = [];
+let projectiles = [];
+let particles = [];
+const socket = new io();
 
-const scoreEl = document.querySelector('#scoreEl')
+socket.on('users updating', (users) => {
+  allUsers = users;
+  players = Object.values(users).map(
+    (user) => new Player(user.x, user.y, user.radius, user.color, user.id),
+  );
+});
 
-canvas.width = innerWidth
-canvas.height = innerHeight
+socket.on('explosion', (playerId) => {
+  let newParticles = [];
+  const existedParticle = particles.filter((el) => el.ownerId === playerId);
+  const deadPlayer = allUsers[playerId];
 
-const x = canvas.width / 2
-const y = canvas.height / 2
-
-const player = new Player(x, y, 10, 'white')
-const projectiles = []
-const enemies = []
-const particles = []
-
-function spawnEnemies() {
-  setInterval(() => {
-    const radius = Math.random() * (30 - 4) + 4
-
-    let x
-    let y
-
-    if (Math.random() < 0.5) {
-      x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius
-      y = Math.random() * canvas.height
-    } else {
-      x = Math.random() * canvas.width
-      y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius
+  if (existedParticle.length > 0) {
+    newParticles = newParticles.concat(existedParticle);
+  } else {
+    const tempBuffer = [];
+    for (let i = 0; i < deadPlayer.radius * 2; i++) {
+      tempBuffer.push(
+        new Particle(
+          deadPlayer.x,
+          deadPlayer.y,
+          Math.random() * 2,
+          deadPlayer.color,
+          {
+            x: (Math.random() - 0.5) * (Math.random() * 6),
+            y: (Math.random() - 0.5) * (Math.random() * 6),
+          },
+          playerId,
+        ),
+      );
     }
+    newParticles = newParticles.concat(tempBuffer);
+  }
 
-    const color = `hsl(${Math.random() * 360}, 50%, 50%)`
+  particles = newParticles;
 
-    const angle = Math.atan2(canvas.height / 2 - y, canvas.width / 2 - x)
+  // remove player from screen
+  players = players.filter((item) => item.id !== playerId);
+});
 
-    const velocity = {
-      x: Math.cos(angle),
-      y: Math.sin(angle)
-    }
+socket.on('projectiles updating', (projectilesData) => {
+  const newProjectiles = [];
+  Object.values(projectilesData).forEach((projectilesByUser) => {
+    projectilesByUser.forEach((item) => {
+      const existedProjectile = projectiles.find((el) => el.id === item.id);
+      newProjectiles.push(
+        existedProjectile
+          ? existedProjectile
+          : new Projectile(
+              item.x,
+              item.y,
+              5,
+              item.color,
+              item.velocity,
+              item.ownerId,
+              item.id,
+            ),
+      );
+    });
+  });
 
-    enemies.push(new Enemy(x, y, radius, color, velocity))
-  }, 1000)
-}
+  projectiles = newProjectiles;
+});
 
-let animationId
-let score = 0
+const scoreEl = document.querySelector('#scoreEl');
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+const x = canvas.width / 2;
+const y = canvas.height / 2;
+
+let animationId;
+let score = 0;
 function animate() {
-  animationId = requestAnimationFrame(animate)
-  c.fillStyle = 'rgba(0, 0, 0, 0.1)'
-  c.fillRect(0, 0, canvas.width, canvas.height)
+  animationId = requestAnimationFrame(animate);
+  c.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  c.fillRect(0, 0, canvas.width, canvas.height);
 
-  player.draw()
-
-  for (let index = particles.length - 1; index >= 0; index--) {
-    const particle = particles[index]
+  // draw explosions
+  for (let index = 0; index < particles.length; index++) {
+    const particle = particles[index];
 
     if (particle.alpha <= 0) {
-      particles.splice(index, 1)
+      particles.splice(index, 1);
     } else {
-      particle.update()
+      particle.update();
     }
   }
 
-  for (let index = projectiles.length - 1; index >= 0; index--) {
-    const projectile = projectiles[index]
+  // draw players
+  for (let idx = 0; idx < players.length; idx++) {
+    const player = players[idx];
+    player.draw();
+  }
 
-    projectile.update()
+  // draw projectiles
+
+  for (let idx = 0; idx < projectiles.length; idx++) {
+    const projectile = projectiles[idx];
+    projectile.update();
+
+    // when projectiles touch a player
+    for (let idx = 0; idx < players.length; idx++) {
+      const player = players[idx];
+      const dist = Math.hypot(projectile.x - player.x, projectile.y - player.y);
+
+      if (
+        projectile.ownerId !== player.id &&
+        dist - player.radius - projectile.radius < 1 &&
+        player.id === socket.id
+      ) {
+        // create explosions
+        socket.emit('player dead', {
+          playerId: player.id,
+        });
+      }
+    }
 
     // remove from edges of screen
     if (
-      projectile.x - projectile.radius < 0 ||
-      projectile.x - projectile.radius > canvas.width ||
-      projectile.y + projectile.radius < 0 ||
-      projectile.y - projectile.radius > canvas.height
+      projectile.ownerId === socket.id &&
+      (projectile.x - projectile.radius < 0 ||
+        projectile.x - projectile.radius > canvas.width ||
+        projectile.y + projectile.radius < 0 ||
+        projectile.y - projectile.radius > canvas.height)
     ) {
-      projectiles.splice(index, 1)
-    }
-  }
-
-  for (let index = enemies.length - 1; index >= 0; index--) {
-    const enemy = enemies[index]
-
-    enemy.update()
-
-    const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y)
-
-    //end game
-    if (dist - enemy.radius - player.radius < 1) {
-      cancelAnimationFrame(animationId)
-    }
-
-    for (
-      let projectilesIndex = projectiles.length - 1;
-      projectilesIndex >= 0;
-      projectilesIndex--
-    ) {
-      const projectile = projectiles[projectilesIndex]
-
-      const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y)
-
-      // when projectiles touch enemy
-      if (dist - enemy.radius - projectile.radius < 1) {
-        // create explosions
-        for (let i = 0; i < enemy.radius * 2; i++) {
-          particles.push(
-            new Particle(
-              projectile.x,
-              projectile.y,
-              Math.random() * 2,
-              enemy.color,
-              {
-                x: (Math.random() - 0.5) * (Math.random() * 6),
-                y: (Math.random() - 0.5) * (Math.random() * 6)
-              }
-            )
-          )
-        }
-        // this is where we shrink our enemy
-        if (enemy.radius - 10 > 5) {
-          score += 100
-          scoreEl.innerHTML = score
-          gsap.to(enemy, {
-            radius: enemy.radius - 10
-          })
-          projectiles.splice(projectilesIndex, 1)
-        } else {
-          // remove enemy if they are too small
-          score += 150
-          scoreEl.innerHTML = score
-
-          enemies.splice(index, 1)
-          projectiles.splice(projectilesIndex, 1)
-        }
-      }
+      socket.emit('remove projectile', {
+        socketId: socket.id,
+        id: projectile.id,
+      });
     }
   }
 }
 
-animate()
-spawnEnemies()
+animate();

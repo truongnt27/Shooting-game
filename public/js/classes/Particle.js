@@ -1,11 +1,12 @@
 const friction = 0.99
 class Particle {
-  constructor(x, y, radius, color, velocity) {
+  constructor(x, y, radius, color, velocity, ownerId) {
     this.x = x
     this.y = y
     this.radius = radius
     this.color = color
     this.velocity = velocity
+    this.ownerId = ownerId
     this.alpha = 1
   }
 

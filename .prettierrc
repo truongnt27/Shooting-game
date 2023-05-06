@@ -1,7 +1,7 @@
 {
- "singleQuote": true,
-  "semi": false,
-  "trailingComma": "none",
+  "singleQuote": true,
+  "semi": true,
+  "trailingComma": "all",
   "overrides": [
     {
       "files": "*.html",
@@ -9,5 +9,6 @@
         "parser": "html"
       }
     }
-  ]
+  ],
+  "endOfLine": "lf"
 }

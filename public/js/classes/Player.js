@@ -1,9 +1,11 @@
 class Player {
-  constructor(x, y, radius, color) {
+  constructor(x, y, radius, color, id) {
     this.x = x
     this.y = y
     this.radius = radius
     this.color = color
+    this.velocity = 3
+    this.id = id
   }
 
   draw() {
