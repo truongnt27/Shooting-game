@@ -9,7 +9,8 @@ const socket = new io();
 socket.on('users updating', (users) => {
   allUsers = users;
   players = Object.values(users).map(
-    (user) => new Player(user.x, user.y, user.radius, user.color, user.id),
+    (user) =>
+      new Player(user.x, user.y, user.radius, user.color, user.id, user.name),
   );
 });
 
@@ -71,6 +72,7 @@ socket.on('projectiles updating', (projectilesData) => {
 });
 
 const scoreEl = document.querySelector('#scoreEl');
+const img = document.getElementById('bg-image');
 
 canvas.width = innerWidth;
 canvas.height = innerHeight;
@@ -82,8 +84,9 @@ let animationId;
 let score = 0;
 function animate() {
   animationId = requestAnimationFrame(animate);
-  c.fillStyle = 'rgba(0, 0, 0, 0.1)';
-  c.fillRect(0, 0, canvas.width, canvas.height);
+  // c.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  c.drawImage(img, 0, 0, canvas.width, canvas.height);
+  // c.fillRect(0, 0, canvas.width, canvas.height);
 
   // draw explosions
   for (let index = 0; index < particles.length; index++) {

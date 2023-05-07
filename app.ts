@@ -14,20 +14,24 @@ const projectiles: any = {};
 
 io.on('connection', (socket) => {
   console.log('a user connected !');
-  const player = genRandomPlayer();
-  users[socket.id] = {
-    ...player,
-    id: socket.id,
-    name: 'unknown',
-  };
-
-  io.emit('users updating', users);
-  io.emit('projectiles updating', projectiles);
 
   socket.on('disconnect', (reason) => {
     console.log('a user disconnected!');
     delete users[socket.id];
     delete projectiles[socket.id];
+  });
+
+  socket.on('player enter game', ({ name }: { name: string }) => {
+    console.log('a user enter the game!');
+    const player = genRandomPlayer();
+    users[socket.id] = {
+      ...player,
+      id: socket.id,
+      name,
+    };
+
+    io.emit('users updating', users);
+    io.emit('projectiles updating', projectiles);
   });
 
   socket.on(
@@ -85,6 +89,8 @@ io.on('connection', (socket) => {
     const { playerId } = data;
     if (users[playerId]) {
       io.emit('explosion', playerId);
+      delete users[socket.id];
+      io.emit('users updating', users);
     }
   });
 });

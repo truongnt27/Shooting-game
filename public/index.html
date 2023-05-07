@@ -5,6 +5,7 @@
         margin: 0;
       }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
     <div
@@ -19,8 +20,43 @@
     >
       <span>Score: <span id="scoreEl">0</span></span>
     </div>
-    <canvas></canvas>
+    <!-- Enter game modal -->
+    <div class="fixed h-full w-full hidden" id="name form">
+      <div class="absolute flex items-center justify-center h-full w-full">
+        <form
+          class="w-80 p-3 pb-9 items-center rounded-lg flex flex-col bg-neutral-900 bg-opacity-40"
+          onsubmit="return submitName();"
+        >
+          <input
+            id="player name"
+            name="player name"
+            type="player name"
+            required
+            class="w-36 h-7 block rounded-lg py-1.5 px-2 focus:outline-none bg-neutral-900 text-white text-center border-gray-500 border-2 bg-opacity-60"
+          />
+          <button
+            type="submit"
+            class="shadow-black bg-red-800 mt-4 w-fit px-8 py-2 rounded-xl text-white text-3xl font-extrabold border-2 border-black"
+          >
+            PLAY
+          </button>
+        </form>
+      </div>
+    </div>
 
+    <!-- Dead modal -->
+    <div class="fixed h-full w-full" id="name form">
+      <div class="absolute flex items-center justify-center h-full w-full">
+        <div
+          class="w-80 p-8 text-2xl font-bold text-red-800 items-center rounded-lg flex flex-col bg-neutral-900 bg-opacity-40"
+        >
+          YOU DIED !
+        </div>
+      </div>
+    </div>
+
+    <img id="bg-image" src="/images/bg.jpg" class="hidden" />
+    <canvas></canvas>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.10.2/gsap.min.js"
       integrity="sha512-kVlGhj2qFy+KBCFuvjBJTGUMxbdqJKs4yK2jh0e0VPhWUPiPC87bzm4THmaaIee3Oj7j6sDpTTgm2EPPiESqBg=="
@@ -34,5 +70,14 @@
     <script src="./js/classes/Projectile.js"></script>
     <script src="./js/eventListeners.js"></script>
     <script src="./js/index.js"></script>
+    <script>
+      function submitName() {
+        const nameEl = document.getElementById('player name');
+        socket.emit('player enter game', { name: nameEl.value });
+        const nameFormEl = document.getElementById('name form');
+        nameFormEl.className = 'hidden';
+        return false;
+      }
+    </script>
   </body>
 </html>
