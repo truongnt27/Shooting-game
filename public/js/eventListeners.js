@@ -1,4 +1,4 @@
-const PLAYER_VELOCITY = 3;
+const PLAYER_VELOCITY = 2;
 // the player attack
 addEventListener('click', (event) => {
   const currentCoordinate = allUsers[socket.id];
@@ -8,9 +8,12 @@ addEventListener('click', (event) => {
       event.clientX - currentCoordinate.x,
     );
     const velocity = {
-      x: Math.cos(angle) * 5,
-      y: Math.sin(angle) * 5,
+      x: Math.cos(angle) * 3,
+      y: Math.sin(angle) * 3,
     };
+
+    shootSound.sound.currentTime = 0;
+    shootSound.play();
 
     socket.emit('player attack', {
       socketId: socket.id,

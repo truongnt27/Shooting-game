@@ -29,10 +29,15 @@ io.on('connection', (socket) => {
         io.emit('projectiles updating', projectiles);
     });
     socket.on('player moving', (data) => {
-        console.log('data', data);
         const { socketId, x, y } = data;
-        users[socketId] = Object.assign(Object.assign({}, users[socketId]), { x: users[socketId].x + x, y: users[socketId].y + y });
-        io.emit('users updating', users);
+        if (users[socketId]) {
+            const newX = users[socketId].x + x;
+            const newY = users[socketId].y + y;
+            if (newX >= users[socketId].radius && newY >= users[socketId].radius) {
+                users[socketId] = Object.assign(Object.assign({}, users[socketId]), { x: newX, y: newY });
+                io.emit('users updating', users);
+            }
+        }
     });
     socket.on('player attack', (data) => {
         console.log('data', data);
@@ -66,6 +71,7 @@ io.on('connection', (socket) => {
     });
     socket.on('player dead', (data) => {
         const { playerId } = data;
+        console.log(`${playerId} died !`);
         if (users[playerId]) {
             io.emit('explosion', playerId);
             delete users[socket.id];

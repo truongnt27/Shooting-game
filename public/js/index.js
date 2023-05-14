@@ -5,6 +5,8 @@ let players = [];
 let projectiles = [];
 let particles = [];
 const socket = new io();
+const shootSound = new Sound('sounds/laserShoot.wav');
+const explosionSound = new Sound('sounds/explosion.wav');
 
 socket.on('users updating', (users) => {
   allUsers = users;
@@ -15,6 +17,11 @@ socket.on('users updating', (users) => {
 });
 
 socket.on('explosion', (playerId) => {
+  explosionSound.play();
+  if (socket.id === playerId) {
+    playAgain();
+  }
+
   let newParticles = [];
   const existedParticle = particles.filter((el) => el.ownerId === playerId);
   const deadPlayer = allUsers[playerId];

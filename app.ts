@@ -37,15 +37,20 @@ io.on('connection', (socket) => {
   socket.on(
     'player moving',
     (data: { socketId: string; x: number; y: number }) => {
-      console.log('data', data);
-
       const { socketId, x, y } = data;
-      users[socketId] = {
-        ...users[socketId],
-        x: users[socketId].x + x,
-        y: users[socketId].y + y,
-      };
-      io.emit('users updating', users);
+      if (users[socketId]) {
+        const newX = users[socketId].x + x;
+        const newY = users[socketId].y + y;
+
+        if (newX >= users[socketId].radius && newY >= users[socketId].radius) {
+          users[socketId] = {
+            ...users[socketId],
+            x: newX,
+            y: newY,
+          };
+          io.emit('users updating', users);
+        }
+      }
     },
   );
 
@@ -87,6 +92,8 @@ io.on('connection', (socket) => {
 
   socket.on('player dead', (data: { playerId: string }) => {
     const { playerId } = data;
+    console.log(`${playerId} died !`);
+
     if (users[playerId]) {
       io.emit('explosion', playerId);
       delete users[socket.id];

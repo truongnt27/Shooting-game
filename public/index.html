@@ -21,16 +21,24 @@
       <span>Score: <span id="scoreEl">0</span></span>
     </div>
     <!-- Enter game modal -->
-    <div class="fixed h-full w-full hidden" id="name form">
-      <div class="absolute flex items-center justify-center h-full w-full">
+    <div class="fixed h-full w-full" id="enter_md">
+      <div
+        class="absolute flex flex-col items-center justify-center h-full w-full"
+      >
+        <span
+          id="dead_lb"
+          class="w-80 hidden text-2xl pt-4 font-bold text-red-800 items-center rounded-lg flex flex-col bg-neutral-900 bg-opacity-40"
+        >
+          YOU DIED !
+        </span>
         <form
           class="w-80 p-3 pb-9 items-center rounded-lg flex flex-col bg-neutral-900 bg-opacity-40"
           onsubmit="return submitName();"
         >
           <input
-            id="player name"
-            name="player name"
-            type="player name"
+            id="player_name"
+            name="player_name"
+            type="player_name"
             required
             class="w-36 h-7 block rounded-lg py-1.5 px-2 focus:outline-none bg-neutral-900 text-white text-center border-gray-500 border-2 bg-opacity-60"
           />
@@ -41,17 +49,6 @@
             PLAY
           </button>
         </form>
-      </div>
-    </div>
-
-    <!-- Dead modal -->
-    <div class="fixed h-full w-full" id="name form">
-      <div class="absolute flex items-center justify-center h-full w-full">
-        <div
-          class="w-80 p-8 text-2xl font-bold text-red-800 items-center rounded-lg flex flex-col bg-neutral-900 bg-opacity-40"
-        >
-          YOU DIED !
-        </div>
       </div>
     </div>
 
@@ -68,14 +65,26 @@
     <script src="./js/classes/Player.js"></script>
     <script src="./js/classes/Particle.js"></script>
     <script src="./js/classes/Projectile.js"></script>
+    <script src="./js/classes/Sound.js"></script>
     <script src="./js/eventListeners.js"></script>
     <script src="./js/index.js"></script>
     <script>
       function submitName() {
-        const nameEl = document.getElementById('player name');
+        const nameEl = document.getElementById('player_name');
         socket.emit('player enter game', { name: nameEl.value });
-        const nameFormEl = document.getElementById('name form');
-        nameFormEl.className = 'hidden';
+        const nameFormEl = document.getElementById('enter_md');
+        const deadLabel = document.getElementById('dead_lb');
+
+        nameFormEl.classList.add('hidden');
+        return false;
+      }
+
+      function playAgain() {
+        const nameFormEl = document.getElementById('enter_md');
+        const deadLabel = document.getElementById('dead_lb');
+
+        deadLabel.classList.remove('hidden');
+        nameFormEl.classList.remove('hidden');
         return false;
       }
     </script>
