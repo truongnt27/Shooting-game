@@ -91,9 +91,8 @@ let animationId;
 let score = 0;
 function animate() {
   animationId = requestAnimationFrame(animate);
-  // c.fillStyle = 'rgba(0, 0, 0, 0.1)';
+
   c.drawImage(img, 0, 0, canvas.width, canvas.height);
-  // c.fillRect(0, 0, canvas.width, canvas.height);
 
   // draw explosions
   for (let index = 0; index < particles.length; index++) {
