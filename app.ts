@@ -1,7 +1,9 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server, DisconnectReason } from 'socket.io';
-import { genRandomPlayer } from './helper';
+import { checkUniqueName, genRandomPlayer } from './helper';
+import { User } from './types';
+import bodyParser from 'body-parser';
 
 const app = express();
 const port = 4200;
@@ -9,7 +11,8 @@ const httpServer = createServer(app);
 const io = new Server(httpServer);
 
 app.use(express.static('public'));
-const users: any = {};
+app.use(bodyParser.json());
+const users: { [key: string]: User } = {};
 const projectiles: any = {};
 
 io.on('connection', (socket) => {
@@ -22,7 +25,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('player enter game', ({ name }: { name: string }) => {
-    console.log('a user enter the game!');
+    if (!checkUniqueName(users, name)) {
+      return io.to(socket.id).emit('Username existed!');
+    }
+    console.log(name + ' user enter the game!');
     const player = genRandomPlayer();
     users[socket.id] = {
       ...player,
@@ -57,8 +63,6 @@ io.on('connection', (socket) => {
   socket.on(
     'player attack',
     (data: { socketId: string; velocity: { x: number; y: number } }) => {
-      console.log('data', data);
-
       const { socketId, velocity } = data;
       const attackingUser = users[socketId];
       if (attackingUser) {
@@ -79,7 +83,6 @@ io.on('connection', (socket) => {
   );
 
   socket.on('remove projectile', (data: { socketId: string; id: string }) => {
-    console.log('remove projectile');
     const { socketId, id } = data;
     if (projectiles[socketId]) {
       const index = projectiles[socketId].find((item: any) => item.id === id);
@@ -104,6 +107,17 @@ io.on('connection', (socket) => {
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
+});
+
+app.post('/enter', (req, res) => {
+  const name = req.body.name;
+  if (!name) {
+    return res.status(400).json('Name is required');
+  }
+  if (!checkUniqueName(users, name)) {
+    return res.status(400).json('Name is invalid');
+  }
+  return res.status(200).json('OK');
 });
 
 httpServer.listen(port, () => {

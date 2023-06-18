@@ -4,6 +4,11 @@
       body {
         margin: 0;
       }
+
+      canvas {
+        height: 100%;
+        width: 100%;
+      }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
@@ -27,7 +32,7 @@
       >
         <span
           id="dead_lb"
-          class="w-80 hidden text-2xl pt-4 font-bold text-red-800 items-center rounded-lg flex flex-col bg-neutral-900 bg-opacity-40"
+          class="w-80 hidden text-2xl pt-4 font-bold text-red-800 items-center rounded-lg text-center bg-neutral-900 bg-opacity-40"
         >
           YOU DIED !
         </span>
@@ -42,6 +47,7 @@
             required
             class="w-36 h-7 block rounded-lg py-1.5 px-2 focus:outline-none bg-neutral-900 text-white text-center border-gray-500 border-2 bg-opacity-60"
           />
+          <div class="text-red-700" id="error"></div>
           <button
             type="submit"
             class="shadow-black bg-red-800 mt-4 w-fit px-8 py-2 rounded-xl text-white text-3xl font-extrabold border-2 border-black"
@@ -69,13 +75,29 @@
     <script src="./js/eventListeners.js"></script>
     <script src="./js/index.js"></script>
     <script>
-      function submitName() {
+      function submitName(e) {
         const nameEl = document.getElementById('player_name');
-        socket.emit('player enter game', { name: nameEl.value });
-        const nameFormEl = document.getElementById('enter_md');
-        const deadLabel = document.getElementById('dead_lb');
+        fetch('/enter', {
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          body: JSON.stringify({ name: nameEl.value }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data === 'OK') {
+              socket.emit('player enter game', { name: nameEl.value });
+              const nameFormEl = document.getElementById('enter_md');
+              nameFormEl.classList.add('hidden');
+            } else {
+              const errorEl = document.getElementById('error');
+              errorEl.innerText = data;
+            }
+          })
+          .catch((error) => {
+            const errorEl = document.getElementById('error');
+            errorEl.innerText = error;
+          });
 
-        nameFormEl.classList.add('hidden');
         return false;
       }
 
